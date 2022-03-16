@@ -1,5 +1,6 @@
 import re
 import os
+from web3 import Web3
 from fastapi import FastAPI, HTTPException
 from api.utils import is_metamorphic_contract
 from dotenv import load_dotenv
@@ -19,6 +20,8 @@ def is_metamorphic(contract_address: str):
     if regex_match == None:
         raise HTTPException(status_code=404, detail="Invalid Ethereum Address")
 
-    is_metamorphic = is_metamorphic_contract(RPC_ENDPOINT, contract_address)
+    web3_interface = Web3(Web3.HTTPProvider(RPC_ENDPOINT))
+
+    is_metamorphic = is_metamorphic_contract(web3_interface, contract_address)
 
     return {"is_metamorphic": is_metamorphic}

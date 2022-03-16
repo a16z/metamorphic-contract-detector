@@ -18,6 +18,8 @@ Add the instructions to use the project. If this section gets long, consider mak
 0x00000000b7ca7E12DCC72290d1FE47b2EF14c607
 0x000000009B988FbecFd83C55252f78592E609648
 0x1d6E8BAC6EA3730825bde4B005ed7B2B39A2932d
+NOT WORK: 0x055658fa70d40a5fa3d0e3e66c29f7e7add08553
+NOT Work: 0xF1f640cdFBFa9A5b408c3D53282AD56e1C76FeF6 (identify wrong block deployment)
 
 ## Related Work and Credits
 - https://betterprogramming.pub/coding-a-discord-bot-with-python-64da9d6cade7

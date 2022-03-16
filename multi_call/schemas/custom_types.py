@@ -1,6 +1,7 @@
 from typing import Optional, List
 from pydantic import BaseModel
 
+
 class CallInput(BaseModel):
     target: str
     abi: List
@@ -9,5 +10,5 @@ class CallInput(BaseModel):
 
 
 class MultiCallContract(BaseModel):
-    bytecode:str
-    return_types:List[str]
+    bytecode: str
+    return_types: List[str]
