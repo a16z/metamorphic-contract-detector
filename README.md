@@ -7,11 +7,20 @@ http://127.0.0.1:8000/ismetamorphic/0x00000000b7ca7E12DCC72290d1FE47b2EF14c607
 
 ## Install
 
-pip3 install -r requirements.txt
+First you will need to install [poetry](https://python-poetry.org/docs/)
+```
+git clone <insert link>
+cd <project dir>
+poetry install
+```
+
 
 ## Usage
 
 Add the instructions to use the project. If this section gets long, consider making separate usage or example pages.
+```
+poetry run uvicorn api.app:app --reload
+```
 
 ## Test Metamorphic Contracts on ETH Mainnet
 
@@ -22,7 +31,7 @@ NOT WORK: 0x055658fa70d40a5fa3d0e3e66c29f7e7add08553
 NOT Work: 0xF1f640cdFBFa9A5b408c3D53282AD56e1C76FeF6 (identify wrong block deployment)
 
 ## Related Work and Credits
-- https://betterprogramming.pub/coding-a-discord-bot-with-python-64da9d6cade7
+- 
 
 
 ## Disclaimer
