@@ -135,9 +135,6 @@ def deployed_with_metamorphic_init_code(
     for trace in create_traces:
         init_code = trace.get("action").get("init")
         created_address = trace.get("result").get("address")
-
-        if (created_address.lower() == contract_address.lower()):
-            print(init_code)
         
         if (
             created_address.lower() == contract_address.lower()

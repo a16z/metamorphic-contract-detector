@@ -20,6 +20,7 @@ poetry install
 Add the instructions to use the project. If this section gets long, consider making separate usage or example pages.
 ```
 poetry run uvicorn api.app:app --reload
+poetry run streamlit run streamlit_app.py
 ```
 
 ## Test Metamorphic Contracts on ETH Mainnet
