@@ -2,7 +2,7 @@ import os
 import re
 import streamlit as st
 from web3 import Web3
-from api.utils import is_metamorphic_contract
+from api.utils import analyze_contract
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -22,9 +22,16 @@ if regex_match == None:
     raise Exception("Invalid Ethereum Address")
 
 contract_address = web3_interface.toChecksumAddress(contract_address)
-is_metamorphic = is_metamorphic_contract(web3_interface, contract_address)
+code_hash_changed, is_metamorphic, contains_selfdestruct = analyze_contract(web3_interface, contract_address)
 
-if is_metamorphic:
-    st.subheader(f"{contract_address[:5]}...{contract_address[-3:]} IS a metamorphic contract")
-else:
-    st.subheader(f"{contract_address[:5]}...{contract_address[-3:]} IS NOT a metamorphic contract")
+st.subheader(f"Code changed since deployment: {code_hash_changed}")
+st.subheader(f"Is Metamorphic: {is_metamorphic}")
+st.subheader(f"Contains SELFDESTRUCT: {contains_selfdestruct}")
+
+
+st.subheader("EDUCATIONAL MATERIAL")
+
+# if contains_selfdestruct:
+#     st.subheader(f"{contract_address[:5]}...{contract_address[-3:]} might contain the SELFDESTRUCT opcode.")
+# else:
+#     st.subheader(f"{contract_address[:5]}...{contract_address[-3:]} does NOT contain the SELFDESTRUCT opcode.") 

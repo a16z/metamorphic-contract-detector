@@ -32,7 +32,9 @@ NOT WORK: 0x055658fa70d40a5fa3d0e3e66c29f7e7add08553
 NOT Work: 0xF1f640cdFBFa9A5b408c3D53282AD56e1C76FeF6 (identify wrong block deployment)
 
 ## Related Work and Credits
-- 
+- https://github.com/MrLuit/selfdestruct-detect/blob/master/src/index.ts
+- https://ethereum-magicians.org/t/potential-security-implications-of-create2-eip-1014/2614
+- https://github.com/0age/metamorphic
 
 
 ## Disclaimer

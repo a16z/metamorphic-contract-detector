@@ -1,20 +1,24 @@
 import json
 import requests
-from typing import Union
+from typing import Union, Tuple
 from web3 import Web3
 
+from .check_selfdestruct import might_selfdestruct
 
-def is_metamorphic_contract(web3_interface: Web3, contract_address: str) -> bool:
-    """Check if a smart contract is a metamorphic contract
+
+def analyze_contract(
+    web3_interface: Web3, contract_address: str
+) -> Tuple[bool, bool, bool]:
+    """Check if a smart contract code hash has changed, contains metamorphic init code, or contains selfdestruct in the deployed code
 
     Args:
         rpc_endpoint (str): rpc endpoint for web3 interface
         contract_address (str): contract address that you want to check
 
     Returns:
-        bool: is the input contract address metamorphic or not
+        Tuple[bool, bool, bool]: code_hash_changed, is_metamorphic, contains_selfdestruct
     """
-    
+
     deployment_block = find_deployment_block_for_contract(
         web3_interface, contract_address
     )
@@ -23,11 +27,11 @@ def is_metamorphic_contract(web3_interface: Web3, contract_address: str) -> bool
         web3_interface, contract_address, deployment_block
     )
 
-    has_metamorphic_init_code = deployed_with_metamorphic_init_code(
+    is_metamorphic, contains_selfdestruct = check_metamorphic_or_contains_selfdestruct(
         web3_interface, contract_address, deployment_block
     )
 
-    return has_metamorphic_init_code or code_hash_changed
+    return code_hash_changed, is_metamorphic, contains_selfdestruct
 
 
 def find_deployment_block_for_contract(
@@ -104,9 +108,9 @@ def get_code_hash(
     return web3_interface.keccak(contract_code).hex()
 
 
-def deployed_with_metamorphic_init_code(
+def check_metamorphic_or_contains_selfdestruct(
     web3_interface: Web3, contract_address: str, block_number: int
-) -> bool:
+) -> Tuple[bool, bool]:
     """Check if a contract was deployed with metamorphic init code described here
     https://github.com/0age/metamorphic/blob/master/contracts/MetamorphicContractFactory.sol
 
@@ -119,27 +123,38 @@ def deployed_with_metamorphic_init_code(
         bool: was this contract deployed with metamorphic init code
     """
 
+    traces = web3_interface.provider.make_request("trace_block", [hex(block_number)])
+
+    traces = traces.get("result")
+
+    block_create_traces = [a for a in traces if "create" in a.get("type")]
+
+    create_trace = [
+        trace
+        for trace in block_create_traces
+        if trace.get("result").get("address") == contract_address.lower()
+    ][0]
+
+    init_code = create_trace.get("action").get("init")
+    deployed_code = create_trace.get("result").get("code")
+
+    is_metamorphic = contains_metamorphic_init_code(init_code)
+    contains_selfdestruct = might_selfdestruct(deployed_code)
+
+    return is_metamorphic, contains_selfdestruct
+
+
+def contains_metamorphic_init_code(init_code: str) -> bool:
+    """_summary_
+
+    Args:
+        init_code (str): _description_
+
+    Returns:
+        bool: _description_
+    """
     metamorphic_init_code = (
         "0x5860208158601c335a63aaf10f428752fa158151803b80938091923cf3"
     )
 
-    traces = web3_interface.provider.make_request(
-        "trace_block", [hex(block_number)]
-    )
-  
-
-    traces = traces.get("result")
-
-    create_traces = [a for a in traces if "create" in a.get("type")]
-    
-    for trace in create_traces:
-        init_code = trace.get("action").get("init")
-        created_address = trace.get("result").get("address")
-        
-        if (
-            created_address.lower() == contract_address.lower()
-            and init_code.lower() == metamorphic_init_code
-        ):
-            return True
-
-    return False
+    return metamorphic_init_code == init_code.lower()
