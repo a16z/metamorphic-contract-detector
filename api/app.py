@@ -12,7 +12,7 @@ RPC_ENDPOINT = os.getenv("RPC_ENDPOINT")
 app = FastAPI()
 
 
-@app.get("/ismetamorphic/{contract_address}")
+@app.get("/analyze/{contract_address}")
 def is_metamorphic(contract_address: str):
 
     regex_match = re.match(r"^0x[a-fA-F0-9]{40}$", contract_address)
@@ -22,6 +22,12 @@ def is_metamorphic(contract_address: str):
 
     web3_interface = Web3(Web3.HTTPProvider(RPC_ENDPOINT))
 
-    code_hash_changed, is_metamorphic, contains_selfdestruct = analyze_contract(web3_interface, contract_address)
+    code_hash_changed, is_metamorphic, contains_selfdestruct = analyze_contract(
+        web3_interface, contract_address
+    )
 
-    return {"is_metamorphic": is_metamorphic}
+    return {
+        "is_metamorphic": is_metamorphic,
+        "code_hash_changed": code_hash_changed,
+        "contains_selfdestruct": contains_selfdestruct,
+    }

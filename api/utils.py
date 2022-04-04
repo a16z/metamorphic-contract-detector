@@ -22,14 +22,20 @@ def analyze_contract(
     deployment_block = find_deployment_block_for_contract(
         web3_interface, contract_address
     )
-    print(deployment_block)
+    
     code_hash_changed = check_code_hash_changed(
         web3_interface, contract_address, deployment_block
     )
 
-    is_metamorphic, contains_selfdestruct = check_metamorphic_or_contains_selfdestruct(
+    (
+        contains_metamorphic_init_code,
+        contains_selfdestruct,
+    ) = check_contains_metamorphic_init_or_selfdestruct(
         web3_interface, contract_address, deployment_block
     )
+
+    # determine if metamorphic contract. If code hash has changed OR has init code than it should be considered metamorphic
+    is_metamorphic = code_hash_changed or contains_metamorphic_init_code
 
     return code_hash_changed, is_metamorphic, contains_selfdestruct
 
@@ -108,7 +114,7 @@ def get_code_hash(
     return web3_interface.keccak(contract_code).hex()
 
 
-def check_metamorphic_or_contains_selfdestruct(
+def check_contains_metamorphic_init_or_selfdestruct(
     web3_interface: Web3, contract_address: str, block_number: int
 ) -> Tuple[bool, bool]:
     """Check if a contract was deployed with metamorphic init code described here
@@ -127,34 +133,29 @@ def check_metamorphic_or_contains_selfdestruct(
 
     traces = traces.get("result")
 
-    block_create_traces = [a for a in traces if "create" in a.get("type")]
+    block_create_traces = [a for a in traces if a.get("type") == "create"]
 
     create_trace = [
         trace
         for trace in block_create_traces
         if trace.get("result").get("address") == contract_address.lower()
-    ][0]
+    ]
 
-    init_code = create_trace.get("action").get("init")
-    deployed_code = create_trace.get("result").get("code")
+    if len(create_trace) > 0:
 
-    is_metamorphic = contains_metamorphic_init_code(init_code)
-    contains_selfdestruct = might_selfdestruct(deployed_code)
+        init_code = create_trace[0].get("action").get("init")
+        deployed_code = create_trace[0].get("result").get("code")
+        print(init_code)
+        print()
+        print(deployed_code)
 
-    return is_metamorphic, contains_selfdestruct
+        contains_metamorphic_init_code = (
+            "5860208158601c335a63aaf10f428752fa158151803b80938091923cf3"
+            in init_code.lower()
+        )
 
+        contains_selfdestruct = might_selfdestruct(deployed_code)
 
-def contains_metamorphic_init_code(init_code: str) -> bool:
-    """_summary_
-
-    Args:
-        init_code (str): _description_
-
-    Returns:
-        bool: _description_
-    """
-    metamorphic_init_code = (
-        "0x5860208158601c335a63aaf10f428752fa158151803b80938091923cf3"
-    )
-
-    return metamorphic_init_code == init_code.lower()
+        return contains_metamorphic_init_code, contains_selfdestruct
+    else:
+        return False, False
