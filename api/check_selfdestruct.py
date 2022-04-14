@@ -1,5 +1,3 @@
-# Credit to https://github.com/MrLuit/selfdestruct-detect/blob/master/src/index.ts
-
 STOP = 0x00
 JUMPDEST = 0x5B
 PUSH1 = 0x60

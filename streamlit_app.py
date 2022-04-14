@@ -33,8 +33,8 @@ code_hash_changed, is_metamorphic, contains_selfdestruct = analyze_contract(
 
 
 st.subheader(f"Code changed since deployment: {code_hash_changed}")
-st.subheader(f"Is Metamorphic: {is_metamorphic}")
-st.subheader(f"Contains SELFDESTRUCT: {contains_selfdestruct}")
+st.subheader(f"Contract Is Metamorphic: {is_metamorphic}")
+st.subheader(f"Contract Contains SELFDESTRUCT: {contains_selfdestruct}")
 
 
 st.subheader("EDUCATIONAL MATERIAL")

@@ -1,5 +1,3 @@
-import json
-import requests
 from typing import Union, Tuple
 from web3 import Web3
 
@@ -58,6 +56,7 @@ def find_deployment_block_for_contract(
     right = web3_interface.eth.getBlock(
         "latest" if not latest_block else latest_block
     ).number
+
     while True:
         if left == right:
             return left
@@ -145,9 +144,6 @@ def check_contains_metamorphic_init_or_selfdestruct(
 
         init_code = create_trace[0].get("action").get("init")
         deployed_code = create_trace[0].get("result").get("code")
-        print(init_code)
-        print()
-        print(deployed_code)
 
         contains_metamorphic_init_code = (
             "5860208158601c335a63aaf10f428752fa158151803b80938091923cf3"
