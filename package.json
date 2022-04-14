@@ -12,7 +12,8 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.3",
     "@nomiclabs/hardhat-etherscan": "^2.1.8",
-    "chai": "^4.3.4"
+    "chai": "^4.3.4",
+    "prettier": "2.6.2"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0",

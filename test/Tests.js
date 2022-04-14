@@ -34,10 +34,14 @@ describe("Contract", async function(){
 
     before(async function(){
         this.timeout(0)
+
         // set contract owner/deployer
         accounts = await ethers.getSigners();
         owner = accounts[0].address
         console.log("Owner Account: " + owner)
+
+        // deploy metamorphic contract factory
+        MetamorphicFactory = await deployContract("MetamorphicFactory")
 
         // get deterministic metamorphic conctract address
         METAMORPHIC_CONTRACT_ADDRESS = await MetamorphicFactory.getMetamorphicContractAddress(SALT)
@@ -47,122 +51,106 @@ describe("Contract", async function(){
         RewardToken = await deployContract("RewardToken")
 
         // mint Reward tokens to staking contract so it has a positive balance 
-        RewardToken.mint(METAMORPHIC_CONTRACT_ADDRESS, 1000000000)
+        await RewardToken.mint(METAMORPHIC_CONTRACT_ADDRESS, 1000000000)
 
-        // deploy metamorphic contract factory
-        MetamorphicFactory = await deployContract("MetamorphicFactory")
+        // mint myself some HonestERC20
+        await HonestERC20.mint(owner, 10000)
 
+        
         // get contract factory for honest and bad staking contracts
         HonestStaking = await ethers.getContractFactory("HonestStaking");
         EvilStaking = await ethers.getContractFactory("EvilStaking");
 
-
-        
 
     })
 
     describe("Simple Tests", function(){
         this.timeout(0)
 
-        it("Mint ERC20 tokens", async()=>{
-            await HonestERC20.mint(owner, 1000)
 
-            let balance = await HonestERC20.balanceOf(owner)
-            expect(balance == 1000)
-        })
+        it("Deploy an Honest Staking Contract and ensure tokens are set ", async()=>{
 
+            let metamorphicContractInitFuncCall = HonestStaking.interface.encodeFunctionData("setStakingAndRewardTokens", [HonestERC20.address, RewardToken.address])
+            
+            await MetamorphicFactory.deployMetamorphicContract(SALT, HonestStaking.bytecode, metamorphicContractInitFuncCall)
 
-        it("Deploy an Honest Staking Contract", async()=>{
-
-            let metamorphicContractInitCode = HonestStaking.interface.encodeFunctionData("setStakingAndRewardTokens", [HonestERC20.address, RewardToken.address])
-            await MetamorphicFactory.deployMetamorphicContract(SALT, HonestStaking.bytecode,metamorphicContractInitCode )
-
-            // set staking token address in the metamorphic contranct
             let honestContract = new Contract(METAMORPHIC_CONTRACT_ADDRESS, HonestStaking.interface, accounts[0])
-            let a = await honestContract.rewardsToken()
-            console.log(a)
-            // await honestContract.setStakingToken(HonestERC20.address)
+            let rewardTokenAddress = await honestContract.rewardsToken()
+            let stakingTokenAddress = await honestContract.stakingToken()
 
-            // // check token address set properly
-            // let stakingToken = await honestContract.stakingToken()
-            // expect(stakingToken == HonestERC20.address)
+            expect(rewardTokenAddress).to.eq(RewardToken.address)
+            expect(stakingTokenAddress).to.eq(HonestERC20.address)
+          
         })
 
 
-        // it("stake tokens in the Honest Staking Contract", async()=>{
+        it("stake tokens in the Honest Staking Contract", async()=>{
 
-        //     // set staking token address in the metamorphic contranct
-        //     let honestContract = new Contract(METAMORPHIC_CONTRACT_ADDRESS, HonestStaking.interface, accounts[0])
+            let honestStakingContract = new Contract(METAMORPHIC_CONTRACT_ADDRESS, HonestStaking.interface, accounts[0])
             
-        //     // approve ERC20 to transfer
-        //     await HonestERC20.approve(METAMORPHIC_CONTRACT_ADDRESS, 1000)
-
-        //     // stake tokens in HonestERC20
-        //     await honestContract.approveAndStake(1000)
-
-        //     // check staking contract balance updated
-        //     let balance = await honestContract.checkStakedBalance()
-        //     expect(balance == 1000)
-        // })
-
-
-
-        // it("kill the HonestStaking contract but check that its balance is still 1000 in honestERC20 contract", async()=>{
-
-        //     // set staking token address in the metamorphic contranct
-        //     let honestContract = new Contract(METAMORPHIC_CONTRACT_ADDRESS, HonestStaking.interface, accounts[0])
-
-
-        //     // self destruct honest staking contract
-        //     await honestContract.kill()
-
-        //     // check that according to HonestERC20, the balance of destroyed contract is still 1000
-        //     let balance = await HonestERC20.balanceOf(METAMORPHIC_CONTRACT_ADDRESS)
-        //     expect(balance == 1000)
-
-        // })
-
-
-
-        // it("deploy the BadStaking contract to replace the HonestStaking contract", async()=>{
-
-        //     await MetamorphicFactory.deploy(SALT, BadStaking.bytecode)
-
-        //     // set staking token address in the metamorphic contranct
-        //     let badContract = new Contract(METAMORPHIC_CONTRACT_ADDRESS, BadStaking.interface, accounts[0])
-        //     await badContract.setStakingToken(HonestERC20.address)
+        
+            await HonestERC20.approve(METAMORPHIC_CONTRACT_ADDRESS, 10000)
+            await honestStakingContract.stake(10000)
             
 
-        //     // check bad staking contract still has a balance of 1000 HonestERC20s
-        //     let balance = await badContract.checkStakedBalance()
-        //     expect(balance == 1000)
-
-        // })
+            // mine next block
+            await network.provider.send("evm_mine") 
+            await network.provider.send("evm_mine") 
 
 
+            let earned = await honestStakingContract.earned(owner) //(owner)
+            console.log(earned)
 
-        // it("rug tokens in the bad staking contract", async()=>{
+            let balance = await HonestERC20.balanceOf(METAMORPHIC_CONTRACT_ADDRESS)
+            expect(balance.toNumber()).to.eq(10000)
+        })
 
-        //     // set staking token address in the metamorphic contranct
-        //     let badContract = new Contract(METAMORPHIC_CONTRACT_ADDRESS, BadStaking.interface, accounts[0])
+
+
+        it("kill the HonestStaking contract but check that its balance is still 10000 in honestERC20 contract", async()=>{
+
+            let honestContract = new Contract(METAMORPHIC_CONTRACT_ADDRESS, HonestStaking.interface, accounts[0])
+
+            await honestContract.kill()
+
+            let balance = await HonestERC20.balanceOf(METAMORPHIC_CONTRACT_ADDRESS)
+            expect(balance.toNumber()).to.eq(10000)
+
+        })
+
+
+
+        it("deploy the EvilStaking contract to replace the HonestStaking contract", async()=>{
+
+            let metamorphicContractInitFuncCall = HonestStaking.interface.encodeFunctionData("setStakingAndRewardTokens", [HonestERC20.address, RewardToken.address])
             
-        //     // steal all HonestERC20 tokens from the Bad Staking contract
-        //     await badContract.rugTokens(owner)
+            await MetamorphicFactory.deployMetamorphicContract(SALT, EvilStaking.bytecode, metamorphicContractInitFuncCall)
+
+
+            let evilContract = new Contract(METAMORPHIC_CONTRACT_ADDRESS, EvilStaking.interface, accounts[0])
+
+            let balance = await evilContract.checkStakedBalance()
+            expect(balance.toNumber()).to.eq(10000)
+
+        })
 
 
 
-        //     // check Bad staking contract now has a 0 balance of HonestERC20
-        //     let balance = await badContract.checkStakedBalance()
-        //     expect(balance == 0)
+        it("steal staked tokens in the evil staking contract", async()=>{
+
+            let evilContract = new Contract(METAMORPHIC_CONTRACT_ADDRESS, EvilStaking.interface, accounts[0])
+            
+            await evilContract.stealTokens(owner)
+
+
+            let balance = await evilContract.checkStakedBalance()
+            expect(balance.toNumber()).to.eq(0)
             
 
-        //     // check that the ruggers balance is now 1000 HonestERC20 tokens
-        //     let ruggerBalance = await HonestERC20.balanceOf(owner)
-        //     expect(ruggerBalance == 1000)
+            let stealerBalance = await HonestERC20.balanceOf(owner)
+            expect(stealerBalance.toNumber()).to.eq(10000)
 
-        // })
-
-
+        })
 
 
     })
