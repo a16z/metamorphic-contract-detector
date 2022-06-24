@@ -1,0 +1,24 @@
+{
+  "name": "metamorphic-smart-contracts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.3",
+    "@nomiclabs/hardhat-etherscan": "^2.1.8",
+    "chai": "^4.3.4",
+    "prettier": "2.6.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.6.0",
+    "dotenv": "^10.0.0",
+    "ethers": "^5.5.2",
+    "hardhat": "^2.9.2"
+  }
+}
